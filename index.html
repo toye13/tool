@@ -3,22 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Discord 多機能ツール 一時休止中</title>
+    <title>Discord 多機能ツール サービス休止のお知らせ</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        body { background:#202225; color:#dcddde; font-family:'Whitney',sans-serif; padding:20px; margin:0; }
+        body { background:#202225; color:#dcddde; font-family:'Whitney',sans-serif; padding:20px; margin:0; text-align:center; }
         .container { max-width:900px; margin:0 auto; }
-        header { text-align:center; padding:20px; border-bottom:1px solid #36393f; }
-        h1, h2 { color:white; }
-        .card { background:#2f3136; border-radius:8px; padding:20px; margin:20px 0; text-align:center; }
-        .warning-card { background:#992d22; border-left:6px solid #ed4245; padding:30px; margin:40px 0; }
-        .warning-text { font-size:1.4em; font-weight:bold; color:#ed4245; }
-        .info-text { font-size:1.1em; margin-top:20px; line-height:1.8; }
-        button { padding:12px 20px; background:#5865F2; color:white; border:none; cursor:pointer; border-radius:4px; font-size:1.1em; }
-        button:hover { background:#4752C4; }
-        button.danger { background:#ed4245; }
-        button.danger:hover { background:#c03537; }
-        .hidden { display:none; }
+        header { padding:40px 20px; border-bottom:1px solid #36393f; }
+        h1 { color:#ed4245; font-size:2.5em; }
+        .warning-card { background:#992d22; border:4px solid #ed4245; border-radius:12px; padding:40px; margin:60px 0; }
+        .warning-icon { font-size:4em; color:#ed4245; margin-bottom:20px; }
+        .warning-title { font-size:2em; font-weight:bold; color:#ed4245; margin-bottom:20px; }
+        .info-text { font-size:1.3em; line-height:1.8; margin:30px 0; }
+        .important { color:#ff6666; font-weight:bold; }
+        .footer { margin-top:50px; font-size:1.1em; color:#b9bbbe; }
     </style>
 </head>
 <body>
@@ -28,78 +25,31 @@
         </header>
 
         <div class="warning-card">
-            <div class="warning-text">
-                ⚠️ サービス一時休止のお知らせ ⚠️
+            <div class="warning-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="warning-title">
+                サービスを無期限休止いたします
             </div>
             <div class="info-text">
-                現在、一部機能に脆弱性が見つかったため、<br>
-                <strong>全サービスを一時休止</strong>しております。<br><br>
-                ユーザーの皆様の安全を最優先に、<br>
-                修正が完了するまですべての実行機能を利用できません。<br><br>
-                ご不便をおかけして申し訳ありません。<br>
-                復旧まで今しばらくお待ちください。
+                当サービスにDiscord利用規約違反の可能性がある機能が含まれており、<br>
+                また複数のユーザー様から<strong class="important">「ツール使用後にアカウントが即時BANされた」</strong>というご報告をいただきました。<br><br>
+
+                皆様のアカウント安全を最優先に考慮した結果、<br>
+                <strong class="important">当サービスを即時かつ無期限で休止</strong>させていただきます。<br><br>
+
+                すでにツールをお持ちの方は、<br>
+                <strong class="important">即時削除</strong>を強くおすすめいたします。<br><br>
+
+                ご利用いただいた皆様には大変ご迷惑をおかけしましたことを、<br>
+                深くお詫び申し上げます。
             </div>
-        </div>
 
-        <div id="token-card" class="card">
-            <h2>トークンを入力（テスト接続のみ可能）</h2>
-            <input type="password" id="token-input" placeholder="Discordユーザー・トークン">
-            <button id="connect-btn">接続テスト</button>
-        </div>
-
-        <div id="main-card" class="card hidden">
-            <h2>現在、すべての機能は利用できません</h2>
-            <p>脆弱性対応のため、実行ボタンは無効化されています。</p>
-            <button id="execute-btn" disabled style="opacity:0.5; cursor:not-allowed;">実行（無効）</button>
-            <div class="info-text" style="margin-top:30px;">
-                復旧をお待ちいただくか、<br>
-                最新情報は公式チャンネルでお知らせします。
-            </div>
-        </div>
-
-        <div id="user-card" class="card hidden">
-            <div style="display:flex; align-items:center; justify-content:space-between;">
-                <img id="avatar" src="" width="64" height="64" style="border-radius:50%;">
-                <h3 id="username">接続済み（機能休止中）</h3>
-                <button id="logout-btn" class="danger">ログアウト</button>
+            <div class="footer">
+                ── Discord 多機能ツール 運営 ──<br>
+                2026年1月9日
             </div>
         </div>
     </div>
-
-    <script>
-        const API = 'https://discord.com/api/v9';
-        let token = null;
-
-        document.getElementById('connect-btn').onclick = async () => {
-            token = document.getElementById('token-input').value.trim();
-            if (!token) return alert('トークンを入力してください');
-
-            try {
-                const me = await (await fetch(`${API}/users/@me`, { headers: { 'Authorization': token } })).json();
-
-                document.getElementById('username').textContent = me.global_name || me.username;
-                document.getElementById('avatar').src = me.avatar ? `https://cdn.discordapp.com/avatars/${me.id}/${me.avatar}.png?size=128` : 'https://cdn.discordapp.com/embed/avatars/0.png';
-
-                document.getElementById('token-card').classList.add('hidden');
-                document.getElementById('main-card').classList.remove('hidden');
-                document.getElementById('user-card').classList.remove('hidden');
-
-                alert('接続テスト成功！\nただし、現在すべての機能は休止中です。');
-            } catch (e) {
-                alert('接続失敗: ' + e.message);
-            }
-        };
-
-        document.getElementById('execute-btn').onclick = () => {
-            alert('現在、脆弱性対応のためすべての実行機能は利用できません。\n復旧までお待ちください。');
-        };
-
-        document.getElementById('logout-btn').onclick = () => {
-            if (confirm('ログアウトしますか？')) {
-                localStorage.clear();
-                location.reload();
-            }
-        };
-    </script>
 </body>
 </html>
