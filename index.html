@@ -1,55 +1,113 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Discord 多機能ツール サービス休止のお知らせ</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        body { background:#202225; color:#dcddde; font-family:'Whitney',sans-serif; padding:20px; margin:0; text-align:center; }
-        .container { max-width:900px; margin:0 auto; }
-        header { padding:40px 20px; border-bottom:1px solid #36393f; }
-        h1 { color:#ed4245; font-size:2.5em; }
-        .warning-card { background:#992d22; border:4px solid #ed4245; border-radius:12px; padding:40px; margin:60px 0; }
-        .warning-icon { font-size:4em; color:#ed4245; margin-bottom:20px; }
-        .warning-title { font-size:2em; font-weight:bold; color:#ed4245; margin-bottom:20px; }
-        .info-text { font-size:1.3em; line-height:1.8; margin:30px 0; }
-        .important { color:#ff6666; font-weight:bold; }
-        .footer { margin-top:50px; font-size:1.1em; color:#b9bbbe; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <header>
-            <h1><i class="fab fa-discord"></i> Discord 多機能ツール</h1>
-        </header>
+// ==UserScript==
+// @name         Discord ボイチャ酸化機能（復活祭ネタ）
+// @namespace    http://tampermonkey.net/
+// @version      2025.2.11-rust
+// @description  話すたびに声が錆びていく…完全酸化まであと何分？
+// @author       パソコン専門
+// @match        https://discord.com/channels/*
+// @grant        none
+// ==/UserScript==
 
-        <div class="warning-card">
-            <div class="warning-icon">
-                <i class="fas fa-exclamation-triangle"></i>
-            </div>
-            <div class="warning-title">
-                サービスを無期限休止いたします
-            </div>
-            <div class="info-text">
-                当サービスにDiscord利用規約違反の可能性がある機能が含まれており、<br>
-                また複数のユーザー様から<strong class="important">「ツール使用後にアカウントが即時BANされた」</strong>というご報告をいただきました。<br><br>
+(function() {
+    'use strict';
 
-                皆様のアカウント安全を最優先に考慮した結果、<br>
-                <strong class="important">当サービスを即時かつ無期限で休止</strong>させていただきます。<br><br>
+    let oxidationLevel = 0;     // 0〜100（100で完全酸化）
+    let lastSpeakTime = Date.now();
+    let isSpeaking = false;
+    let audioContext = null;
+    let voiceStream = null;
 
-                すでにツールをお持ちの方は、<br>
-                <strong class="important">即時削除</strong>を強くおすすめいたします。<br><br>
+    // 酸化エフェクト適用関数
+    function applyOxidation(stream) {
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
 
-                ご利用いただいた皆様には大変ご迷惑をおかけしましたことを、<br>
-                深くお詫び申し上げます。
-            </div>
+        const source = audioContext.createMediaStreamSource(stream);
+        const gain = audioContext.createGain();
+        const biquad = audioContext.createBiquadFilter();
+        const distortion = audioContext.createWaveShaper();
 
-            <div class="footer">
-                ── Discord 多機能ツール 運営 ──<br>
-                2026年1月9日
-            </div>
-        </div>
-    </div>
-</body>
-</html>
+        // 酸化レベルに応じてエフェクト強度変更
+        gain.gain.value = 1 - (oxidationLevel / 200); // 徐々に音量ダウン
+        biquad.type = 'lowshelf';
+        biquad.frequency.value = 800 - (oxidationLevel * 6);
+        biquad.gain.value = -oxidationLevel / 2;
+
+        // ガリガリノイズ（錆び感）
+        distortion.curve = new Float32Array(65536).map((_, i) => {
+            const x = (i - 32768) / 32768;
+            return x * (oxidationLevel / 30) * Math.sin(x * 10);
+        });
+
+        source.connect(gain);
+        gain.connect(biquad);
+        biquad.connect(distortion);
+        distortion.connect(audioContext.destination);
+
+        return stream;
+    }
+
+    // 話してるか監視（簡易版）
+    function monitorSpeaking() {
+        setInterval(() => {
+            const now = Date.now();
+            if (isSpeaking) {
+                // 話してる間は酸化進行
+                oxidationLevel = Math.min(100, oxidationLevel + 0.3);
+                lastSpeakTime = now;
+            } else if (now - lastSpeakTime > 5000) {
+                // 5秒以上喋ってないと少し回復
+                oxidationLevel = Math.max(0, oxidationLevel - 1);
+            }
+
+            // 酸化レベル表示（オーバーレイ）
+            let overlay = document.getElementById('oxidation-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'oxidation-overlay';
+                overlay.style.position = 'fixed';
+                overlay.style.top = '10px';
+                overlay.style.right = '10px';
+                overlay.style.background = 'rgba(0,0,0,0.7)';
+                overlay.style.padding = '8px 16px';
+                overlay.style.borderRadius = '8px';
+                overlay.style.zIndex = '99999';
+                overlay.style.fontSize = '1.2em';
+                overlay.style.pointerEvents = 'none';
+                document.body.appendChild(overlay);
+            }
+            overlay.textContent = `酸化度: ${Math.floor(oxidationLevel)}% ${oxidationLevel > 80 ? '🦴完全に錆びてる…' : oxidationLevel > 50 ? '🧲錆び始めてる…' : ''}`;
+
+        }, 1000);
+    }
+
+    // ボイスチャンネル参加を検知してフック
+    const originalGetUserMedia = navigator.mediaDevices.getUserMedia;
+    navigator.mediaDevices.getUserMedia = async function(constraints) {
+        const stream = await originalGetUserMedia.call(navigator.mediaDevices, constraints);
+
+        // マイクトラックが見つかったらエフェクト適用
+        const audioTrack = stream.getAudioTracks()[0];
+        if (audioTrack) {
+            console.log('[酸化機能] マイク検知 → 錆び開始');
+            isSpeaking = true;
+            return applyOxidation(stream);
+        }
+
+        return stream;
+    };
+
+    // 話してるか監視開始
+    monitorSpeaking();
+
+    // チャンネル退出検知（簡易）
+    setInterval(() => {
+        if (!document.querySelector('[aria-label*="ボイスチャンネル"]')) {
+            oxidationLevel = 0; // 退出したらリセット
+            isSpeaking = false;
+        }
+    }, 2000);
+
+    console.log('【復活祭ネタ】ボイチャ酸化機能 起動！ 話せば話すほど錆びていきます…🦴');
+})();
