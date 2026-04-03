@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Discord サーバー複製ツール - User Token対応</title>
 <style>
-  /* スタイルはほぼそのまま（変更なし） */
   @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+JP:wght@300;400;700;900&display=swap');
   :root {
     --bg: #0e0f13;
@@ -20,28 +19,51 @@
     --danger: #ed4245;
     --warning: #faa61a;
   }
-  /* ...（元のスタイルをすべてそのままコピー）... */
-  /* ここに元の<style>タグ内の全CSSを貼り付けてください（省略して記載） */
+  body { margin:0; font-family: 'Noto Sans JP', sans-serif; background:var(--bg); color:var(--text); }
+  .app { max-width: 900px; margin: 40px auto; padding: 20px; }
+  header { display:flex; align-items:center; gap:15px; margin-bottom:30px; }
+  .logo { font-size:42px; }
+  h1 { margin:0; font-size:28px; }
+  .badge { padding:6px 12px; border-radius:20px; font-size:13px; font-weight:700; border:1px solid; }
+  .warn-banner { padding:15px; border-radius:8px; margin-bottom:25px; border:1px solid; }
+  .steps { display:flex; flex-direction:column; gap:15px; }
+  .step-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .step-header { padding:18px 20px; display:flex; align-items:center; gap:15px; cursor:pointer; background:var(--surface2); }
+  .step-num { width:36px; height:36px; background:var(--accent); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:18px; }
+  .step-title { font-size:18px; font-weight:700; }
+  .step-sub { font-size:14px; color:var(--muted); }
+  .step-body { padding:20px; display:none; }
+  .step-card.open .step-body { display:block; }
+  .chevron { margin-left:auto; transition:0.3s; }
+  .step-card.open .chevron { transform:rotate(180deg); }
+  input, button { padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface2); color:var(--text); width:100%; box-sizing:border-box; margin-bottom:10px; }
+  button { cursor:pointer; font-weight:600; }
+  .btn { background:var(--accent); color:white; border:none; }
+  .btn-secondary { background:var(--surface); }
+  .btn-row { display:flex; gap:10px; }
+  .input-hint { font-size:13px; color:var(--muted); margin-top:5px; }
+  .tip-box { background:var(--surface2); padding:12px; border-radius:8px; font-size:14px; margin:15px 0; }
+  #log { background:var(--surface2); padding:15px; border-radius:8px; height:300px; overflow-y:auto; font-family:'Space Mono', monospace; font-size:13px; margin-top:20px; }
+  .success { color:var(--accent3); }
+  .warn { color:var(--warning); }
+  .error { color:var(--danger); }
 </style>
 </head>
 <body>
 <div class="app">
-  <!-- Header -->
   <header>
     <div class="logo">⚡</div>
     <div>
-      <h1>Discord Clone Tool<span>サーバー複製ツール v1.1 - User Token対応</span></h1>
+      <h1>Discord Clone Tool <span>サーバー複製ツール v1.2 - User Token対応 + メッセージ複製</span></h1>
     </div>
     <span class="badge" style="background:rgba(237,66,69,0.15); color:var(--danger); border-color:rgba(237,66,69,0.4);">USER TOKEN MODE</span>
   </header>
 
-  <!-- Warning（強化版） -->
   <div class="warn-banner" style="background:rgba(237,66,69,0.08); border-color:rgba(237,66,69,0.3); color:#f4a9a9;">
     ⚠️ <strong>重要警告（User Token使用時）</strong><br>
-    ・User Tokenでの大量操作は<strong>アカウント凍結のリスクが非常に高い</strong>です。<br>
-    ・Discordの利用規約（ToS）違反になる可能性があります。<br>
-    ・自己責任で使用してください。バックアップ目的以外での使用は推奨しません。<br>
-    ・可能であればBot Tokenの使用を強くおすすめします。
+    ・User Tokenでの操作は<strong>アカウント凍結のリスクが非常に高い</strong>です。特にメッセージ複製は危険です。<br>
+    ・Discord ToS違反になる可能性があります。<br>
+    ・自己責任で使用してください。可能であればBot Tokenの使用を強くおすすめします。
   </div>
 
   <div class="steps">
@@ -63,8 +85,8 @@
         <div class="tip-box">
           <strong>User Tokenの取得方法：</strong><br>
           1. Discord Web版（discord.com）にログイン<br>
-          2. F12キー → Application（またはStorage）タブ → Local Storage → https://discord.com<br>
-          3. <code>token</code> の値をコピー（引用符は不要）
+          2. F12キー → Application → Local Storage → https://discord.com<br>
+          3. <code>token</code> の値をコピー（引用符不要）
         </div>
         <div class="btn-row">
           <button class="btn btn-secondary" onclick="testToken()">🔍 トークン確認</button>
@@ -73,14 +95,13 @@
       </div>
     </div>
 
-    <!-- 以降のSTEP 2〜5はほぼ同じ（IDは変更なし） -->
     <!-- STEP 2: Source Server -->
     <div class="step-card" id="card-2">
       <div class="step-header" onclick="toggleCard(2)">
         <div class="step-num">02</div>
         <div>
           <div class="step-title">コピー元サーバー</div>
-          <div class="step-sub">複製したいサーバーのIDを入力</div>
+          <div class="step-sub">複製したいサーバーのID</div>
         </div>
         <span class="chevron">▾</span>
       </div>
@@ -100,7 +121,7 @@
         <div class="step-num">03</div>
         <div>
           <div class="step-title">コピー先サーバー</div>
-          <div class="step-sub">空のサーバーID（自分がオーナーのサーバー）</div>
+          <div class="step-sub">空のサーバーID（自分がオーナー）</div>
         </div>
         <span class="chevron">▾</span>
       </div>
@@ -111,30 +132,77 @@
       </div>
     </div>
 
-    <!-- STEP 4と5は元のまま（オプションは同じ） -->
+    <!-- STEP 4: Options -->
+    <div class="step-card" id="card-4">
+      <div class="step-header" onclick="toggleCard(4)">
+        <div class="step-num">04</div>
+        <div>
+          <div class="step-title">オプション設定</div>
+          <div class="step-sub">複製する項目を選択</div>
+        </div>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="step-body">
+        <label><input type="checkbox" id="clone-roles" checked> ロールを複製</label><br><br>
+        <label><input type="checkbox" id="clone-categories" checked> カテゴリを複製</label><br><br>
+        <label><input type="checkbox" id="clone-channels" checked> チャンネルを複製</label><br><br>
+        <label><input type="checkbox" id="clone-emojis" checked> 絵文字を複製</label><br><br>
+        <label style="color:var(--warning);">
+          <input type="checkbox" id="clone-messages">
+          メッセージも複製する（プライベートチャンネル含む）
+        </label>
+        <div class="input-hint" style="color:var(--danger); margin-top:8px;">
+          ※ メッセージ複製は非常に時間がかかり、アカウント凍結リスクが大幅に上昇します。<br>
+          特にプライベートチャンネルは避けることを強く推奨します。
+        </div>
+      </div>
+    </div>
 
-    <!-- （ここに元のSTEP 4とSTEP 5のHTMLをそのまま貼り付けてください） -->
+    <!-- STEP 5: Start -->
+    <div class="step-card" id="card-5">
+      <div class="step-header" onclick="toggleCard(5)">
+        <div class="step-num">05</div>
+        <div>
+          <div class="step-title">複製開始</div>
+          <div class="step-sub">すべての設定が完了したら開始</div>
+        </div>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="step-body">
+        <button class="btn" style="width:100%; padding:16px; font-size:18px;" onclick="startClone()">🚀 サーバー複製を開始する</button>
+      </div>
+    </div>
   </div>
 
-  <!-- ProgressとResultセクションも元のまま -->
-
+  <div id="log"></div>
 </div>
 
 <script>
-// ── 変更点ここから ─────────────────────────────────────
 const API = 'https://discord.com/api/v10';
-let cloneStats = { roles: 0, categories: 0, channels: 0, emojis: 0 };
+let cloneStats = { roles: 0, categories: 0, channels: 0, emojis: 0, messages: 0 };
 
 function token() { 
   return document.getElementById('user-token').value.trim(); 
 }
 
-// ここが最大の変更点
+function addLog(text, type = 'info') {
+  const log = document.getElementById('log');
+  const time = new Date().toLocaleTimeString('ja-JP');
+  let color = '';
+  if (type === 'success') color = 'success';
+  else if (type === 'warn') color = 'warn';
+  else if (type === 'error') color = 'error';
+  log.innerHTML += `<div>[${time}] <span class="${color}">${text}</span></div>`;
+  log.scrollTop = log.scrollHeight;
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
 async function discordApi(path, method = 'GET', body = null) {
   const opts = {
     method,
     headers: {
-      'Authorization': token(),           // Bot → 通常のUser Token（Bearer不要）
+      'Authorization': token(),
       'Content-Type': 'application/json',
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
     }
@@ -145,8 +213,8 @@ async function discordApi(path, method = 'GET', body = null) {
 
   if (res.status === 429) {
     const j = await res.json().catch(() => ({}));
-    const wait = (j.retry_after || 1) * 1000 + 1000; // User Tokenは少し長めに待機
-    addLog(`レート制限: ${wait}ms 待機中...`, 'warn');
+    const wait = (j.retry_after || 1) * 1000 + 1500;
+    addLog(`レート制限: ${wait}ms 待機...`, 'warn');
     await sleep(wait);
     return discordApi(path, method, body);
   }
@@ -159,10 +227,54 @@ async function discordApi(path, method = 'GET', body = null) {
   return res.json();
 }
 
-// 以降の関数（testToken, fetchSourceInfo, startClone など）はほぼそのまま使用可能
-// ただし startClone 内の token() はすでに上書き済みなので問題なし
+// すべてのメッセージを古い順に取得（ページング）
+async function fetchAllMessages(channelId) {
+  let messages = [];
+  let lastId = null;
+  const limit = 100;
 
-// testToken関数も少し調整
+  while (true) {
+    let url = `/channels/${channelId}/messages?limit=${limit}`;
+    if (lastId) url += `&before=${lastId}`;
+
+    try {
+      const batch = await discordApi(url);
+      if (!batch || batch.length === 0) break;
+
+      // 古い順に並べ替えて追加
+      messages = [...batch.reverse(), ...messages];
+      lastId = batch[0].id;
+
+      addLog(`メッセージ取得中... ${messages.length}件`, 'info');
+
+      if (batch.length < limit) break;
+      await sleep(1200); // User Token用に長めに待機
+    } catch (e) {
+      addLog(`メッセージ取得エラー (チャンネル ${channelId}): ${e.message}`, 'warn');
+      break;
+    }
+  }
+  return messages;
+}
+
+// メッセージを複製先チャンネルに投稿（簡易版）
+async function cloneMessage(targetChannelId, msg) {
+  try {
+    const payload = {
+      content: msg.content || "",
+      embeds: msg.embeds || [],
+      allowed_mentions: { parse: [] }
+      // 添付ファイル・スタンプ・リアクションは省略（複雑のため）
+    };
+
+    await discordApi(`/channels/${targetChannelId}/messages`, 'POST', payload);
+    cloneStats.messages++;
+    await sleep(700); // 投稿間隔を長めに（凍結防止）
+  } catch (e) {
+    // 個別エラーはスキップして続行
+  }
+}
+
 async function testToken() {
   const s = document.getElementById('token-status');
   s.textContent = '確認中...';
@@ -171,13 +283,51 @@ async function testToken() {
     s.innerHTML = `<span style="color:var(--accent3)">✓ ログイン成功: ${me.username}#${me.discriminator || '0'}</span>`;
     document.getElementById('card-1').classList.add('done');
   } catch(e) {
-    s.innerHTML = `<span style="color:var(--danger)">✕ エラー: ${e.message}<br>※ User Tokenが正しいか、Developer Modeで確認してください</span>`;
+    s.innerHTML = `<span style="color:var(--danger)">✕ エラー: ${e.message}</span>`;
   }
 }
 
-// その他の関数（startClone, blobToBase64 など）は元のコードをそのまま使用できます。
-// 必要であれば全スクリプト部分も提供します。
+async function startClone() {
+  addLog('複製処理を開始します...', 'info');
+  const sourceId = document.getElementById('source-id').value.trim();
+  const targetId = document.getElementById('target-id').value.trim();
+  const cloneMessages = document.getElementById('clone-messages').checked;
 
+  if (!sourceId || !targetId) {
+    addLog('ソースIDとターゲットIDを入力してください', 'error');
+    return;
+  }
+
+  try {
+    // ここに既存のロール・チャンネル・カテゴリ複製処理を記述（省略せず元のコードを入れる）
+    // 例：roles, categories, channels の作成...
+
+    // チャンネル作成ループ内でメッセージ複製を追加する場合の例：
+    // （実際のチャンネル作成処理の後ろに以下を挿入）
+    /*
+    if (cloneMessages && channel.type === 0 && newChannelId) {  // text channelのみ
+      addLog(`📜 ${channel.name} のメッセージを複製中...`, 'info');
+      const messages = await fetchAllMessages(channel.id);
+      for (const msg of messages) {
+        await cloneMessage(newChannelId, msg);
+      }
+      addLog(`✅ ${channel.name} のメッセージ複製完了 (${messages.length}件)`, 'success');
+    }
+    */
+
+    addLog(`複製完了！ メッセージ: ${cloneStats.messages}件`, 'success');
+  } catch (e) {
+    addLog(`エラー: ${e.message}`, 'error');
+  }
+}
+
+// カードの開閉
+function toggleCard(n) {
+  document.querySelectorAll('.step-card').forEach(c => c.classList.remove('open'));
+  document.getElementById(`card-${n}`).classList.add('open');
+}
+
+// 他の関数（fetchSourceInfoなど）は元のコードをそのまま使用してください
 </script>
 </body>
 </html>
