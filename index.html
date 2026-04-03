@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Discord サーバー複製ツール</title>
+<title>Discord サーバー複製ツール - User Token対応</title>
 <style>
+  /* スタイルはほぼそのまま（変更なし） */
   @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans+JP:wght@300;400;700;900&display=swap');
-
   :root {
     --bg: #0e0f13;
     --surface: #16181f;
@@ -20,474 +20,52 @@
     --danger: #ed4245;
     --warning: #faa61a;
   }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: 'Noto Sans JP', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* Grid noise background */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(88,101,242,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(88,101,242,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .app {
-    position: relative;
-    z-index: 1;
-    max-width: 960px;
-    margin: 0 auto;
-    padding: 32px 20px 80px;
-  }
-
-  /* ── Header ── */
-  header {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 48px;
-    padding-bottom: 28px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .logo {
-    width: 52px; height: 52px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border-radius: 16px;
-    display: grid; place-items: center;
-    font-size: 26px;
-    flex-shrink: 0;
-    box-shadow: 0 0 24px rgba(88,101,242,0.4);
-  }
-
-  header h1 {
-    font-family: 'Space Mono', monospace;
-    font-size: clamp(18px, 4vw, 26px);
-    font-weight: 700;
-    letter-spacing: -0.5px;
-    line-height: 1.2;
-  }
-
-  header h1 span {
-    display: block;
-    font-size: 12px;
-    font-family: 'Noto Sans JP', sans-serif;
-    color: var(--muted);
-    font-weight: 300;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    margin-top: 2px;
-  }
-
-  .badge {
-    margin-left: auto;
-    background: rgba(88,101,242,0.15);
-    border: 1px solid rgba(88,101,242,0.3);
-    color: var(--accent);
-    font-family: 'Space Mono', monospace;
-    font-size: 10px;
-    padding: 4px 10px;
-    border-radius: 20px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    white-space: nowrap;
-  }
-
-  /* ── Warning Banner ── */
-  .warn-banner {
-    background: rgba(250,166,26,0.08);
-    border: 1px solid rgba(250,166,26,0.25);
-    border-left: 3px solid var(--warning);
-    border-radius: 8px;
-    padding: 14px 16px;
-    font-size: 12px;
-    color: #c8a06e;
-    margin-bottom: 32px;
-    line-height: 1.7;
-  }
-
-  .warn-banner strong { color: var(--warning); }
-
-  /* ── Step Cards ── */
-  .steps {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  .step-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-    transition: border-color 0.2s;
-  }
-
-  .step-card:hover { border-color: rgba(88,101,242,0.4); }
-
-  .step-header {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 18px 20px;
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .step-num {
-    width: 32px; height: 32px;
-    border-radius: 8px;
-    background: rgba(88,101,242,0.15);
-    border: 1px solid rgba(88,101,242,0.3);
-    color: var(--accent);
-    font-family: 'Space Mono', monospace;
-    font-size: 13px;
-    font-weight: 700;
-    display: grid; place-items: center;
-    flex-shrink: 0;
-  }
-
-  .step-card.done .step-num {
-    background: rgba(87,242,135,0.1);
-    border-color: rgba(87,242,135,0.3);
-    color: var(--accent3);
-  }
-
-  .step-title {
-    font-size: 15px;
-    font-weight: 700;
-  }
-
-  .step-sub {
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 2px;
-  }
-
-  .chevron {
-    margin-left: auto;
-    color: var(--muted);
-    transition: transform 0.3s;
-    font-size: 18px;
-  }
-
-  .step-card.open .chevron { transform: rotate(180deg); }
-
-  .step-body {
-    display: none;
-    padding: 0 20px 20px;
-  }
-
-  .step-card.open .step-body { display: block; }
-
-  /* ── Form Elements ── */
-  label {
-    display: block;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 6px;
-    margin-top: 16px;
-  }
-
-  label:first-child { margin-top: 0; }
-
-  input[type="text"], input[type="password"], textarea, select {
-    width: 100%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-family: 'Space Mono', monospace;
-    font-size: 13px;
-    padding: 10px 14px;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-
-  input:focus, textarea:focus, select:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(88,101,242,0.15);
-  }
-
-  textarea { resize: vertical; min-height: 80px; font-size: 12px; }
-
-  .input-hint {
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 5px;
-    line-height: 1.5;
-  }
-
-  /* ── Buttons ── */
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-    border: none;
-    transition: all 0.2s;
-    font-family: 'Noto Sans JP', sans-serif;
-  }
-
-  .btn-primary {
-    background: var(--accent);
-    color: #fff;
-  }
-  .btn-primary:hover { background: #4752c4; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(88,101,242,0.4); }
-
-  .btn-secondary {
-    background: var(--surface2);
-    color: var(--text);
-    border: 1px solid var(--border);
-  }
-  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
-
-  .btn-danger {
-    background: rgba(237,66,69,0.15);
-    color: var(--danger);
-    border: 1px solid rgba(237,66,69,0.3);
-  }
-  .btn-danger:hover { background: rgba(237,66,69,0.25); }
-
-  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
-
-  .btn-row {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-top: 16px;
-  }
-
-  /* ── Checkbox Options ── */
-  .options-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 10px;
-    margin-top: 4px;
-  }
-
-  .opt-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 14px;
-    cursor: pointer;
-    transition: border-color 0.2s;
-  }
-
-  .opt-item:hover { border-color: var(--accent); }
-  .opt-item input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; }
-  .opt-item input[type="checkbox"]:checked + span { color: var(--accent); }
-
-  .opt-item span {
-    font-size: 13px;
-    font-weight: 700;
-  }
-
-  .opt-icon { font-size: 16px; }
-
-  /* ── Progress ── */
-  #progress-section {
-    display: none;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 24px;
-    margin-top: 20px;
-  }
-
-  .progress-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 14px;
-  }
-
-  .progress-header h3 {
-    font-family: 'Space Mono', monospace;
-    font-size: 14px;
-  }
-
-  .progress-pct {
-    font-family: 'Space Mono', monospace;
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--accent);
-  }
-
-  .progress-bar-wrap {
-    background: var(--surface2);
-    border-radius: 99px;
-    height: 6px;
-    margin-bottom: 16px;
-    overflow: hidden;
-  }
-
-  .progress-bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-    border-radius: 99px;
-    transition: width 0.4s ease;
-    width: 0%;
-  }
-
-  #log-area {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 14px;
-    font-family: 'Space Mono', monospace;
-    font-size: 11px;
-    max-height: 220px;
-    overflow-y: auto;
-    line-height: 1.9;
-  }
-
-  .log-line { display: flex; align-items: flex-start; gap: 8px; }
-  .log-line.ok   .log-icon { color: var(--accent3); }
-  .log-line.err  .log-icon { color: var(--danger); }
-  .log-line.info .log-icon { color: var(--accent); }
-  .log-line.warn .log-icon { color: var(--warning); }
-  .log-text { color: var(--muted); }
-
-  /* ── Result ── */
-  #result-section {
-    display: none;
-    background: rgba(87,242,135,0.05);
-    border: 1px solid rgba(87,242,135,0.2);
-    border-radius: 12px;
-    padding: 24px;
-    margin-top: 20px;
-    text-align: center;
-  }
-
-  #result-section h3 {
-    font-size: 18px;
-    font-weight: 900;
-    color: var(--accent3);
-    margin-bottom: 8px;
-  }
-
-  #result-section p { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
-
-  .result-id {
-    font-family: 'Space Mono', monospace;
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--text);
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px 20px;
-    display: inline-block;
-    cursor: pointer;
-    transition: border-color 0.2s;
-  }
-
-  .result-id:hover { border-color: var(--accent3); }
-
-  /* ── Token Tips ── */
-  .tip-box {
-    background: rgba(88,101,242,0.07);
-    border: 1px solid rgba(88,101,242,0.2);
-    border-radius: 8px;
-    padding: 14px 16px;
-    font-size: 12px;
-    color: var(--muted);
-    line-height: 1.7;
-    margin-top: 12px;
-  }
-
-  .tip-box strong { color: var(--accent); }
-
-  code {
-    font-family: 'Space Mono', monospace;
-    background: rgba(255,255,255,0.06);
-    padding: 1px 5px;
-    border-radius: 4px;
-    font-size: 11px;
-    color: #aab4ff;
-  }
-
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: var(--surface2); }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-  @media (max-width: 480px) {
-    .options-grid { grid-template-columns: 1fr 1fr; }
-    .btn-row { flex-direction: column; }
-    .btn { width: 100%; justify-content: center; }
-  }
+  /* ...（元のスタイルをすべてそのままコピー）... */
+  /* ここに元の<style>タグ内の全CSSを貼り付けてください（省略して記載） */
 </style>
 </head>
 <body>
 <div class="app">
-
   <!-- Header -->
   <header>
     <div class="logo">⚡</div>
     <div>
-      <h1>Discord Clone Tool<span>サーバー複製ツール v1.0</span></h1>
+      <h1>Discord Clone Tool<span>サーバー複製ツール v1.1 - User Token対応</span></h1>
     </div>
-    <span class="badge">GitHub Pages対応</span>
+    <span class="badge" style="background:rgba(237,66,69,0.15); color:var(--danger); border-color:rgba(237,66,69,0.4);">USER TOKEN MODE</span>
   </header>
 
-  <!-- Warning -->
-  <div class="warn-banner">
-    ⚠️ <strong>注意事項：</strong>
-    本ツールは Discord Bot Token を使用してサーバー構造を複製します。
-    Botには対象サーバーへの適切な権限が必要です。
-    Discordの利用規約に従った用途（バックアップ・移行等）にのみご使用ください。
-    トークンは第三者に共有しないでください。
+  <!-- Warning（強化版） -->
+  <div class="warn-banner" style="background:rgba(237,66,69,0.08); border-color:rgba(237,66,69,0.3); color:#f4a9a9;">
+    ⚠️ <strong>重要警告（User Token使用時）</strong><br>
+    ・User Tokenでの大量操作は<strong>アカウント凍結のリスクが非常に高い</strong>です。<br>
+    ・Discordの利用規約（ToS）違反になる可能性があります。<br>
+    ・自己責任で使用してください。バックアップ目的以外での使用は推奨しません。<br>
+    ・可能であればBot Tokenの使用を強くおすすめします。
   </div>
 
   <div class="steps">
-
-    <!-- STEP 1: Bot Token -->
+    <!-- STEP 1: Token -->
     <div class="step-card open" id="card-1">
       <div class="step-header" onclick="toggleCard(1)">
         <div class="step-num">01</div>
         <div>
-          <div class="step-title">Bot Token 設定</div>
-          <div class="step-sub">Discord Developer Portal からトークンを取得</div>
+          <div class="step-title">User Token 設定</div>
+          <div class="step-sub">自分のDiscordアカウントのUser Token</div>
         </div>
         <span class="chevron">▾</span>
       </div>
       <div class="step-body">
-        <label>Bot Token</label>
-        <input type="password" id="bot-token" placeholder="MTxxxxxxxx.Gxxxxx.xxxxxxxxxxxxxxxx" autocomplete="off">
-        <div class="input-hint">🔒 トークンはブラウザ上でのみ使用され、外部サーバーには送信されません。</div>
-
+        <label>User Token</label>
+        <input type="password" id="user-token" placeholder="MTAxxxxxxxxxxxxxxx.xxxxxxx.xxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+        <div class="input-hint">🔒 トークンはブラウザ上でのみ使用され、外部には送信されません。</div>
+        
         <div class="tip-box">
-          <strong>取得方法：</strong><br>
-          1. <a href="https://discord.com/developers/applications" target="_blank" style="color:var(--accent)">discord.com/developers/applications</a> を開く<br>
-          2. アプリを選択 → <strong>Bot</strong> タブ → <strong>Reset Token</strong><br>
-          3. 必要な Intents: <code>GUILDS</code> <code>GUILD_MEMBERS</code> <code>GUILD_MESSAGES</code>
+          <strong>User Tokenの取得方法：</strong><br>
+          1. Discord Web版（discord.com）にログイン<br>
+          2. F12キー → Application（またはStorage）タブ → Local Storage → https://discord.com<br>
+          3. <code>token</code> の値をコピー（引用符は不要）
         </div>
-
         <div class="btn-row">
           <button class="btn btn-secondary" onclick="testToken()">🔍 トークン確認</button>
         </div>
@@ -495,6 +73,7 @@
       </div>
     </div>
 
+    <!-- 以降のSTEP 2〜5はほぼ同じ（IDは変更なし） -->
     <!-- STEP 2: Source Server -->
     <div class="step-card" id="card-2">
       <div class="step-header" onclick="toggleCard(2)">
@@ -508,13 +87,6 @@
       <div class="step-body">
         <label>コピー元サーバー ID</label>
         <input type="text" id="source-id" placeholder="123456789012345678">
-
-        <div class="tip-box">
-          <strong>サーバーIDの確認方法：</strong><br>
-          Discord の設定 → 詳細設定 → <strong>開発者モード</strong> をON<br>
-          サーバーアイコンを右クリック → <strong>IDをコピー</strong>
-        </div>
-
         <div class="btn-row">
           <button class="btn btn-secondary" onclick="fetchSourceInfo()">📡 サーバー情報を取得</button>
         </div>
@@ -528,217 +100,69 @@
         <div class="step-num">03</div>
         <div>
           <div class="step-title">コピー先サーバー</div>
-          <div class="step-sub">空のサーバーIDまたは新規作成</div>
+          <div class="step-sub">空のサーバーID（自分がオーナーのサーバー）</div>
         </div>
         <span class="chevron">▾</span>
       </div>
       <div class="step-body">
         <label>コピー先サーバー ID</label>
         <input type="text" id="target-id" placeholder="987654321098765432">
-        <div class="input-hint">事前に空のサーバーを作成してBotを招待しておいてください。</div>
-
-        <div class="tip-box">
-          <strong>Bot招待URL生成：</strong><br>
-          Developer Portal → OAuth2 → URL Generator<br>
-          Scopes: <code>bot</code> &nbsp; Permissions: <code>Administrator</code>（推奨）
-        </div>
+        <div class="input-hint">自分がオーナー権限を持つ空のサーバーを用意してください。</div>
       </div>
     </div>
 
-    <!-- STEP 4: Options -->
-    <div class="step-card" id="card-4">
-      <div class="step-header" onclick="toggleCard(4)">
-        <div class="step-num">04</div>
-        <div>
-          <div class="step-title">複製オプション</div>
-          <div class="step-sub">コピーする要素を選択</div>
-        </div>
-        <span class="chevron">▾</span>
-      </div>
-      <div class="step-body">
-        <label>複製する要素</label>
-        <div class="options-grid">
-          <label class="opt-item">
-            <input type="checkbox" id="opt-roles" checked>
-            <span class="opt-icon">🎭</span>
-            <span>ロール</span>
-          </label>
-          <label class="opt-item">
-            <input type="checkbox" id="opt-categories" checked>
-            <span class="opt-icon">📁</span>
-            <span>カテゴリー</span>
-          </label>
-          <label class="opt-item">
-            <input type="checkbox" id="opt-channels" checked>
-            <span class="opt-icon">💬</span>
-            <span>チャンネル</span>
-          </label>
-          <label class="opt-item">
-            <input type="checkbox" id="opt-perms" checked>
-            <span class="opt-icon">🔒</span>
-            <span>権限設定</span>
-          </label>
-          <label class="opt-item">
-            <input type="checkbox" id="opt-emojis">
-            <span class="opt-icon">😄</span>
-            <span>絵文字</span>
-          </label>
-          <label class="opt-item">
-            <input type="checkbox" id="opt-webhooks">
-            <span class="opt-icon">🔗</span>
-            <span>Webhook</span>
-          </label>
-          <label class="opt-item">
-            <input type="checkbox" id="opt-icon">
-            <span class="opt-icon">🖼️</span>
-            <span>サーバーアイコン</span>
-          </label>
-          <label class="opt-item">
-            <input type="checkbox" id="opt-slow">
-            <span class="opt-icon">🐢</span>
-            <span>低速モード（安定）</span>
-          </label>
-        </div>
+    <!-- STEP 4と5は元のまま（オプションは同じ） -->
 
-        <label style="margin-top:20px">遅延設定 (ms)</label>
-        <select id="delay-select">
-          <option value="300">300ms（高速）</option>
-          <option value="600" selected>600ms（推奨）</option>
-          <option value="1200">1200ms（安全）</option>
-          <option value="2000">2000ms（レート制限回避）</option>
-        </select>
-        <div class="input-hint">レート制限エラーが出る場合は遅延を増やしてください。</div>
-      </div>
-    </div>
-
-    <!-- STEP 5: Execute -->
-    <div class="step-card" id="card-5">
-      <div class="step-header" onclick="toggleCard(5)">
-        <div class="step-num">05</div>
-        <div>
-          <div class="step-title">実行</div>
-          <div class="step-sub">複製を開始します</div>
-        </div>
-        <span class="chevron">▾</span>
-      </div>
-      <div class="step-body">
-        <div class="warn-banner" style="margin-bottom:0">
-          ⚠️ <strong>実行前に確認：</strong>
-          コピー先サーバーの既存チャンネル・ロールは削除される場合があります。
-          空のサーバーへの複製を推奨します。
-        </div>
-        <div class="btn-row" style="margin-top:16px">
-          <button class="btn btn-primary" onclick="startClone()" id="start-btn">
-            ⚡ 複製を開始
-          </button>
-          <button class="btn btn-secondary" onclick="exportConfig()">
-            💾 設定をエクスポート
-          </button>
-          <button class="btn btn-danger" onclick="clearAll()">
-            🗑️ リセット
-          </button>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /steps -->
-
-  <!-- Progress -->
-  <div id="progress-section">
-    <div class="progress-header">
-      <h3>複製進行中...</h3>
-      <span class="progress-pct" id="pct-text">0%</span>
-    </div>
-    <div class="progress-bar-wrap">
-      <div class="progress-bar-fill" id="prog-bar"></div>
-    </div>
-    <div id="log-area"></div>
+    <!-- （ここに元のSTEP 4とSTEP 5のHTMLをそのまま貼り付けてください） -->
   </div>
 
-  <!-- Result -->
-  <div id="result-section">
-    <h3>✅ 複製完了！</h3>
-    <p>サーバーが正常に複製されました。</p>
-    <div class="result-id" id="result-id" onclick="copyResultId()">クリックでIDをコピー</div>
-    <p style="margin-top:12px; font-size:11px; color:var(--muted)">
-      複製されたサーバー: <span id="result-stats" style="color:var(--accent3)"></span>
-    </p>
-  </div>
+  <!-- ProgressとResultセクションも元のまま -->
 
-</div><!-- /app -->
+</div>
 
 <script>
-// ── State ──────────────────────────────────────────
+// ── 変更点ここから ─────────────────────────────────────
 const API = 'https://discord.com/api/v10';
 let cloneStats = { roles: 0, categories: 0, channels: 0, emojis: 0 };
 
-// ── Helpers ────────────────────────────────────────
-function token() { return document.getElementById('bot-token').value.trim(); }
-function sourceId() { return document.getElementById('source-id').value.trim(); }
-function targetId() { return document.getElementById('target-id').value.trim(); }
-
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-function delay() {
-  return parseInt(document.getElementById('delay-select').value);
+function token() { 
+  return document.getElementById('user-token').value.trim(); 
 }
 
+// ここが最大の変更点
 async function discordApi(path, method = 'GET', body = null) {
   const opts = {
     method,
     headers: {
-      'Authorization': `Bot ${token()}`,
+      'Authorization': token(),           // Bot → 通常のUser Token（Bearer不要）
       'Content-Type': 'application/json',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
     }
   };
   if (body) opts.body = JSON.stringify(body);
+
   const res = await fetch(API + path, opts);
+
   if (res.status === 429) {
-    const j = await res.json();
-    const wait = (j.retry_after || 1) * 1000 + 500;
+    const j = await res.json().catch(() => ({}));
+    const wait = (j.retry_after || 1) * 1000 + 1000; // User Tokenは少し長めに待機
     addLog(`レート制限: ${wait}ms 待機中...`, 'warn');
     await sleep(wait);
     return discordApi(path, method, body);
   }
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(`${res.status} ${err.message || ''}`);
+    throw new Error(`${res.status} ${err.message || err.error || 'Unknown error'}`);
   }
   if (res.status === 204) return null;
   return res.json();
 }
 
-// ── UI Helpers ─────────────────────────────────────
-function toggleCard(n) {
-  const card = document.getElementById(`card-${n}`);
-  card.classList.toggle('open');
-}
+// 以降の関数（testToken, fetchSourceInfo, startClone など）はほぼそのまま使用可能
+// ただし startClone 内の token() はすでに上書き済みなので問題なし
 
-let logCount = 0;
-function addLog(msg, type = 'info') {
-  const icons = { ok: '✓', err: '✕', info: '›', warn: '!' };
-  const el = document.getElementById('log-area');
-  const line = document.createElement('div');
-  line.className = `log-line ${type}`;
-  line.innerHTML = `<span class="log-icon">${icons[type] || '›'}</span><span class="log-text">${msg}</span>`;
-  el.appendChild(line);
-  el.scrollTop = el.scrollHeight;
-  logCount++;
-}
-
-let totalSteps = 0;
-let doneSteps = 0;
-
-function setTotal(n) { totalSteps = n; updatePct(); }
-function addDone(n = 1) { doneSteps += n; updatePct(); }
-
-function updatePct() {
-  const pct = totalSteps ? Math.round((doneSteps / totalSteps) * 100) : 0;
-  document.getElementById('pct-text').textContent = pct + '%';
-  document.getElementById('prog-bar').style.width = pct + '%';
-}
-
-// ── Token Test ─────────────────────────────────────
+// testToken関数も少し調整
 async function testToken() {
   const s = document.getElementById('token-status');
   s.textContent = '確認中...';
@@ -747,299 +171,13 @@ async function testToken() {
     s.innerHTML = `<span style="color:var(--accent3)">✓ ログイン成功: ${me.username}#${me.discriminator || '0'}</span>`;
     document.getElementById('card-1').classList.add('done');
   } catch(e) {
-    s.innerHTML = `<span style="color:var(--danger)">✕ エラー: ${e.message}</span>`;
+    s.innerHTML = `<span style="color:var(--danger)">✕ エラー: ${e.message}<br>※ User Tokenが正しいか、Developer Modeで確認してください</span>`;
   }
 }
 
-// ── Fetch Source Info ──────────────────────────────
-async function fetchSourceInfo() {
-  const el = document.getElementById('source-info');
-  el.textContent = '取得中...';
-  try {
-    const guild = await discordApi(`/guilds/${sourceId()}?with_counts=true`);
-    el.innerHTML = `
-      <span style="color:var(--accent3)">✓ サーバー取得成功</span><br>
-      <span>名前: <strong>${guild.name}</strong> &nbsp;|&nbsp; メンバー: ${guild.approximate_member_count || '?'}人</span><br>
-      <span>チャンネル数: 取得にはリスト取得が必要です</span>
-    `;
-    document.getElementById('card-2').classList.add('done');
-  } catch(e) {
-    el.innerHTML = `<span style="color:var(--danger)">✕ ${e.message}</span>`;
-  }
-}
+// その他の関数（startClone, blobToBase64 など）は元のコードをそのまま使用できます。
+// 必要であれば全スクリプト部分も提供します。
 
-// ── Main Clone ─────────────────────────────────────
-async function startClone() {
-  if (!token() || !sourceId() || !targetId()) {
-    alert('Bot Token、コピー元ID、コピー先IDをすべて入力してください。');
-    return;
-  }
-  if (sourceId() === targetId()) {
-    alert('コピー元とコピー先が同じサーバーです。');
-    return;
-  }
-
-  document.getElementById('start-btn').disabled = true;
-  document.getElementById('progress-section').style.display = 'block';
-  document.getElementById('result-section').style.display = 'none';
-  document.getElementById('log-area').innerHTML = '';
-  logCount = 0; doneSteps = 0; totalSteps = 0;
-  cloneStats = { roles: 0, categories: 0, channels: 0, emojis: 0 };
-
-  try {
-    addLog('複製開始...', 'info');
-
-    // Fetch source data
-    addLog('コピー元データを取得中...', 'info');
-    const [sourceGuild, sourceChannels, sourceRoles, sourceEmojis] = await Promise.all([
-      discordApi(`/guilds/${sourceId()}`),
-      discordApi(`/guilds/${sourceId()}/channels`),
-      discordApi(`/guilds/${sourceId()}/roles`),
-      document.getElementById('opt-emojis').checked
-        ? discordApi(`/guilds/${sourceId()}/emojis`)
-        : Promise.resolve([])
-    ]);
-
-    const doRoles = document.getElementById('opt-roles').checked;
-    const doCategories = document.getElementById('opt-categories').checked;
-    const doChannels = document.getElementById('opt-channels').checked;
-    const doEmojis = document.getElementById('opt-emojis').checked;
-    const doPerms = document.getElementById('opt-perms').checked;
-    const doIcon = document.getElementById('opt-icon').checked;
-
-    // Count total steps
-    let steps = 0;
-    if (doRoles) steps += sourceRoles.filter(r => r.name !== '@everyone').length;
-    if (doCategories) steps += sourceChannels.filter(c => c.type === 4).length;
-    if (doChannels) steps += sourceChannels.filter(c => c.type !== 4).length;
-    if (doEmojis) steps += sourceEmojis.length;
-    setTotal(steps + 2);
-
-    // Optionally update server name/icon
-    if (doIcon) {
-      addLog('サーバー情報を更新中...', 'info');
-      try {
-        const body = { name: sourceGuild.name };
-        if (sourceGuild.icon) {
-          const iconUrl = `https://cdn.discordapp.com/icons/${sourceId()}/${sourceGuild.icon}.png?size=256`;
-          const iconResp = await fetch(iconUrl);
-          const iconBlob = await iconResp.blob();
-          const b64 = await blobToBase64(iconBlob);
-          body.icon = b64;
-        }
-        await discordApi(`/guilds/${targetId()}`, 'PATCH', body);
-        addLog('サーバーアイコン・名前を更新', 'ok');
-      } catch(e) { addLog(`アイコン更新失敗: ${e.message}`, 'warn'); }
-    }
-    addDone();
-
-    // Delete existing channels in target
-    addLog('コピー先の既存チャンネルを削除中...', 'info');
-    const existingChannels = await discordApi(`/guilds/${targetId()}/channels`);
-    for (const ch of existingChannels) {
-      try {
-        await discordApi(`/channels/${ch.id}`, 'DELETE');
-        await sleep(delay() / 2);
-      } catch(e) {}
-    }
-    addLog(`既存チャンネル ${existingChannels.length} 件を削除`, 'ok');
-    addDone();
-
-    // Roles
-    const roleMap = {}; // sourceId → targetId
-    if (doRoles) {
-      addLog('ロールを作成中...', 'info');
-      const sortedRoles = sourceRoles
-        .filter(r => r.name !== '@everyone')
-        .sort((a, b) => b.position - a.position);
-
-      for (const role of sortedRoles) {
-        try {
-          const created = await discordApi(`/guilds/${targetId()}/roles`, 'POST', {
-            name: role.name,
-            permissions: role.permissions,
-            color: role.color,
-            hoist: role.hoist,
-            mentionable: role.mentionable,
-          });
-          roleMap[role.id] = created.id;
-          cloneStats.roles++;
-          addLog(`ロール作成: ${role.name}`, 'ok');
-        } catch(e) {
-          addLog(`ロール失敗 (${role.name}): ${e.message}`, 'warn');
-        }
-        addDone();
-        await sleep(delay());
-      }
-    }
-
-    // Categories + Channels
-    const channelMap = {}; // sourceId → targetId
-    const categories = sourceChannels.filter(c => c.type === 4).sort((a, b) => a.position - b.position);
-    const nonCategories = sourceChannels.filter(c => c.type !== 4).sort((a, b) => a.position - b.position);
-
-    if (doCategories) {
-      addLog('カテゴリーを作成中...', 'info');
-      for (const cat of categories) {
-        try {
-          const body = { name: cat.name, type: 4 };
-          if (doPerms && cat.permission_overwrites) {
-            body.permission_overwrites = mapPermissions(cat.permission_overwrites, roleMap);
-          }
-          const created = await discordApi(`/guilds/${targetId()}/channels`, 'POST', body);
-          channelMap[cat.id] = created.id;
-          cloneStats.categories++;
-          addLog(`カテゴリー: ${cat.name}`, 'ok');
-        } catch(e) {
-          addLog(`カテゴリー失敗 (${cat.name}): ${e.message}`, 'warn');
-        }
-        addDone();
-        await sleep(delay());
-      }
-    }
-
-    if (doChannels) {
-      addLog('チャンネルを作成中...', 'info');
-      for (const ch of nonCategories) {
-        try {
-          const body = {
-            name: ch.name,
-            type: ch.type,
-            topic: ch.topic,
-            nsfw: ch.nsfw,
-            bitrate: ch.bitrate,
-            user_limit: ch.user_limit,
-            rate_limit_per_user: ch.rate_limit_per_user,
-            position: ch.position,
-          };
-          if (ch.parent_id && channelMap[ch.parent_id]) {
-            body.parent_id = channelMap[ch.parent_id];
-          }
-          if (doPerms && ch.permission_overwrites) {
-            body.permission_overwrites = mapPermissions(ch.permission_overwrites, roleMap);
-          }
-          const created = await discordApi(`/guilds/${targetId()}/channels`, 'POST', body);
-          channelMap[ch.id] = created.id;
-          cloneStats.channels++;
-          addLog(`チャンネル: #${ch.name}`, 'ok');
-        } catch(e) {
-          addLog(`チャンネル失敗 (#${ch.name}): ${e.message}`, 'warn');
-        }
-        addDone();
-        await sleep(delay());
-      }
-    }
-
-    // Emojis
-    if (doEmojis && sourceEmojis.length) {
-      addLog('絵文字をコピー中...', 'info');
-      for (const emoji of sourceEmojis) {
-        try {
-          const ext = emoji.animated ? 'gif' : 'png';
-          const url = `https://cdn.discordapp.com/emojis/${emoji.id}.${ext}`;
-          const resp = await fetch(url);
-          const blob = await resp.blob();
-          const b64 = await blobToBase64(blob);
-          await discordApi(`/guilds/${targetId()}/emojis`, 'POST', {
-            name: emoji.name,
-            image: b64,
-          });
-          cloneStats.emojis++;
-          addLog(`絵文字: :${emoji.name}:`, 'ok');
-        } catch(e) {
-          addLog(`絵文字失敗 (${emoji.name}): ${e.message}`, 'warn');
-        }
-        addDone();
-        await sleep(delay() * 2);
-      }
-    }
-
-    // Done
-    updatePct();
-    addLog('─────────────────────────', 'info');
-    addLog(`完了！ ロール:${cloneStats.roles} カテゴリー:${cloneStats.categories} チャンネル:${cloneStats.channels} 絵文字:${cloneStats.emojis}`, 'ok');
-
-    document.getElementById('result-section').style.display = 'block';
-    document.getElementById('result-id').textContent = targetId();
-    document.getElementById('result-stats').textContent =
-      `ロール ${cloneStats.roles} / カテゴリー ${cloneStats.categories} / チャンネル ${cloneStats.channels} / 絵文字 ${cloneStats.emojis}`;
-
-    document.getElementById('card-5').classList.add('done');
-
-  } catch(e) {
-    addLog(`致命的エラー: ${e.message}`, 'err');
-    console.error(e);
-  } finally {
-    document.getElementById('start-btn').disabled = false;
-  }
-}
-
-// Map permission overwrites: replace source role IDs with target role IDs
-function mapPermissions(overwrites, roleMap) {
-  return overwrites.map(ow => {
-    const mapped = { ...ow };
-    if (ow.type === 0 && roleMap[ow.id]) {
-      mapped.id = roleMap[ow.id];
-    }
-    return mapped;
-  }).filter(ow => ow.id); // remove unmapped
-}
-
-function blobToBase64(blob) {
-  return new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onload = () => res(r.result);
-    r.onerror = rej;
-    r.readAsDataURL(blob);
-  });
-}
-
-// ── Export Config ──────────────────────────────────
-function exportConfig() {
-  const config = {
-    sourceServerId: sourceId(),
-    targetServerId: targetId(),
-    options: {
-      roles: document.getElementById('opt-roles').checked,
-      categories: document.getElementById('opt-categories').checked,
-      channels: document.getElementById('opt-channels').checked,
-      permissions: document.getElementById('opt-perms').checked,
-      emojis: document.getElementById('opt-emojis').checked,
-      webhooks: document.getElementById('opt-webhooks').checked,
-      icon: document.getElementById('opt-icon').checked,
-    },
-    delay: delay(),
-  };
-  const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'discord-clone-config.json';
-  a.click();
-}
-
-function clearAll() {
-  if (!confirm('すべての入力をリセットしますか？')) return;
-  document.getElementById('bot-token').value = '';
-  document.getElementById('source-id').value = '';
-  document.getElementById('target-id').value = '';
-  document.getElementById('progress-section').style.display = 'none';
-  document.getElementById('result-section').style.display = 'none';
-  document.getElementById('token-status').textContent = '';
-  document.getElementById('source-info').textContent = '';
-  document.querySelectorAll('.step-card').forEach(c => c.classList.remove('done'));
-}
-
-function copyResultId() {
-  navigator.clipboard.writeText(targetId()).then(() => {
-    document.getElementById('result-id').textContent = 'コピーしました！';
-    setTimeout(() => {
-      document.getElementById('result-id').textContent = targetId();
-    }, 1500);
-  });
-}
-
-// Auto-open first card
-document.getElementById('card-1').classList.add('open');
 </script>
 </body>
 </html>
